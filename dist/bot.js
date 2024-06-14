@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const TelegramBot = require("node-telegram-bot-api");
 const dotenv = require("dotenv");
-const swapConfig_1 = __importDefault(require("./swapRaydium/swapConfig")); // Import the configuration
+const swapRaydium_1 = __importDefault(require("./swapRaydium")); // Import the configuration
 // Load environment variables
 dotenv.config();
 const token = process.env.TELEGRAM_TOKEN;
@@ -70,7 +70,7 @@ bot.on("message", (msg) => {
             session.tokenAddress = tokenAddress;
             session.waitingForTokenAddress = false;
             bot.sendMessage(chatId, `👌 Success! Ready for swap ...                                                 \n\n💰 Amount: ${session.amount.toFixed(6)} SOL           \n🤝 Token Address: ${tokenAddress}`);
-            console.log("----***--SwapConfig---***---", (0, swapConfig_1.default)(tokenAddress, session.amount));
+            console.log("----***--SwapConfig---***---", (0, swapRaydium_1.default)(tokenAddress, session.amount));
             delete sessions[chatId]; // Clear session after completion
         }
     }
