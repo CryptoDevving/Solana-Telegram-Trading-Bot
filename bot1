@@ -1,0 +1,130 @@
+// Import the necessary packages
+const TelegramBot = require("node-telegram-bot-api");
+const dotenv = require("dotenv");
+
+// Load environment variables
+dotenv.config();
+
+const token = process.env.TELEGRAM_TOKEN;
+console.log("Bot token:", token); // Confirm token is loaded
+
+// Create a new Telegram bot using polling to fetch new updates
+const bot = new TelegramBot(token, { polling: true });
+
+interface StateRecord {
+  [key: string]: boolean;
+}
+
+// Initialize waitingForAmount and waitingForTokenAddress with the correct type
+const waitingForAmount: StateRecord = {};
+const waitingForTokenAddress: StateRecord = {};
+
+// Define the inline keyboard layout for interaction
+const options = {
+  reply_markup: {
+    inline_keyboard: [
+      [
+        { text: "🛒 Buy", callback_data: "buy" },
+        { text: "📈 Sell", callback_data: "sell" },
+      ],
+      [
+        { text: "💼 Help", callback_data: "help" },
+        { text: "📬 Channel", url: "https://t.me/Maestrosdegen" },
+      ],
+    ],
+  },
+};
+
+// Define the inline keyboard layout for interaction
+const selectedBuyOptions = {
+  reply_markup: {
+    inline_keyboard: [
+      [
+        { text: "🛒 Manual Buy", callback_data: "manual_buy" },
+      ],
+      [
+        { text: "🚀 Auto   Buy", callback_data: "auto_buy" },
+      ],
+    ],
+  },
+};
+
+// Handle the /start command
+bot.onText(/\/start/, (msg: any) => {
+  const chatId = msg.chat.id;
+  const welcomeMessage =
+    "🍄 Welcome to my soltank_bot!\n\n`AAEuA3DeoblV-LZQwoexDgWJoM2Tg0-E2Ns                                   `\n\n`https://t.me/mysol_tankbot`\n\n 🥞 Please choose a category below:";
+
+  // Send the welcome message with the inline keyboard
+  bot.sendMessage(chatId, welcomeMessage, options);
+});
+
+
+// Handle callback queries from inline buttons
+bot.on("callback_query", (callbackQuery: any) => {
+  const message = callbackQuery.message;
+  const category = callbackQuery.data; // The 'callback_data' associated with the button pressed.
+  const chatId = message.chat.id;
+
+  // Handle the selected category
+  if (category === "buy") {
+    // Handle buy action
+    const buyMessage = "🏆 Buy token   ...                        ";
+    // Send the buy message with the inline keyboard
+    bot.sendMessage(chatId, buyMessage, selectedBuyOptions);
+
+  } else if (category === "sell") {
+    // Handle sell action
+  } else if (category === "help") {
+    // Handle sniper action
+  } else if (category === "manual_buy") {
+    // Handle manual buy action
+    waitingForAmount[chatId] = true;
+    waitingForTokenAddress[chatId] = false;
+    const buyManualMessage = "✍ Input the amount you want to buy ...  (sol)     \n⚱️  For example: 1.25                      ";
+    // Send the buy message with the inline keyboard
+    bot.sendMessage(chatId, buyManualMessage);
+  } else if (category === "auto_buy") {
+    // Handle auto buy action
+    const chatId = message.chat.id; 
+    const buyAutoMessage = "✍ Input the amount you want to buy ...  (sol)     \n⚱️  For example: 1.25                        ";
+    // Send the buy message with the inline keyboard
+    bot.sendMessage(chatId, buyAutoMessage);
+  }
+});
+
+  // Handle messages
+  bot.on("message", (msg:any) => {
+    const chatId = msg.chat.id;
+
+    let amount: number = 0;
+    let tokenAddress: string = "";
+
+    let flag = 0;
+
+    if (waitingForTokenAddress[chatId]) {
+        tokenAddress = msg.text.trim();
+        if (tokenAddress.length > 0) {
+            console.log("Token address:", tokenAddress);
+            waitingForTokenAddress[chatId] = false;
+            flag = 1;
+        }
+    }
+
+    if (waitingForAmount[chatId]) {
+        amount = parseFloat(msg.text);
+        if (!isNaN(amount)) {
+            waitingForAmount[chatId] = false;
+            waitingForTokenAddress[chatId] = true;
+            bot.sendMessage(chatId, "🧧 Input the token address you want to buy ...  (sol)     \n\n⚱️  For example: 7NgbAAMf3ozg4NG3Ynt2de5TA2afMZZkfkGpEpC2mXYu      ");
+            console.log("Buy amount:", amount);
+        } else {
+            bot.sendMessage(chatId, "Invalid amount. Please enter a valid number.");
+        }
+    }
+
+    if(flag == 1){ 
+      console.log("Buy token:", tokenAddress, "Amount:", amount);
+      bot.sendMessage(chatId, `👌 Success! Ready for swap...\nAmount: ${amount.toFixed(2)} SOL\nToken Address: ${tokenAddress}`);
+    }
+});
